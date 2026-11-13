@@ -38,7 +38,7 @@ const civil = [
   ['Which drawing communicates dimensions and construction details?', 'Technical drawing', ['Weather chart', 'Invoice only', 'Attendance sheet']],
   ['What is the purpose of a drainage system?', 'Control and convey water', ['Increase paint gloss', 'Reduce steel density', 'Measure room temperature']],
 ];
-const state = { schedule: JSON.parse(localStorage.getItem('blueprint-schedule') || 'null') || scheduleSeed, customDays: JSON.parse(localStorage.getItem('blueprint-days') || '[]'), questions: [], index: 0, selected: null, submitted: false, score: 0, unlocked: false, day: 'Saturday', view: 'cards' };
+const state = { schedule: JSON.parse(localStorage.getItem('blueprint-schedule') || 'null') || scheduleSeed, customDays: JSON.parse(localStorage.getItem('blueprint-days') || '[]'), questions: [], index: 0, selected: null, submitted: false, score: 0, unlocked: localStorage.getItem('blueprint-unlocked') === 'true', day: 'Saturday', view: 'cards' };
 const allDays = () => [...DAYS, ...state.customDays];
 const shuffle = (items) => { const copy = items.slice(); for (let i = copy.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [copy[i], copy[j]] = [copy[j], copy[i]]; } return copy; };
 const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text) node.textContent = text; return node; };
@@ -60,7 +60,7 @@ function makeQuestions() {
 }
 function save() { localStorage.setItem('blueprint-schedule', JSON.stringify(state.schedule)); }
 function saveDays() { localStorage.setItem('blueprint-days', JSON.stringify(state.customDays)); }
-function startVerification() { state.questions = [makeQuestions()[0]]; state.index = 0; state.selected = null; state.submitted = false; state.score = 0; state.unlocked = false; render(); }
+function startVerification() { state.questions = [makeQuestions()[0]]; state.index = 0; state.selected = null; state.submitted = false; state.score = 0; state.unlocked = false; localStorage.removeItem('blueprint-unlocked'); render(); }
 function render() {
   document.body.innerHTML = '';
   const shell = el('main', 'app-shell'); const header = el('header', 'topbar'); const brand = el('div', 'brand'); const logo = document.createElement('img'); logo.src = '/logo.png'; logo.alt = 'Blueprint'; const brandText = el('div'); brandText.append(el('strong', '', 'BLUEPRINT'), el('span', '', 'Civil engineering studio')); brand.append(logo, brandText); header.append(brand, button('↻', 'icon-button', startVerification)); shell.append(header);
@@ -71,7 +71,7 @@ function renderGate(shell) {
   const card = el('div', 'quiz-card'); const q = state.questions[state.index]; const row = el('div', 'progress-row'); row.append(el('span', '', 'One question to unlock'), el('span', '', 'Fresh every time')); card.append(row); const track = el('div', 'progress-track'); const fill = el('i'); fill.style.width = '100%'; track.append(fill); card.append(track); card.append(el('span', 'question-label', 'Question 01'), el('h2', '', q.text));
   const answers = el('div', 'answers'); q.options.forEach((option, index) => { const answer = button('', 'answer', () => { if (!state.submitted) { state.selected = index; render(); } }); answer.append(el('span', 'answer-dot'), el('span', '', option)); if (state.selected === index) answer.classList.add('selected'); if (state.submitted && option === q.answer) answer.classList.add('correct'); if (state.submitted && state.selected === index && option !== q.answer) answer.classList.add('incorrect'); answer.disabled = state.submitted; answers.append(answer); }); card.append(answers);
   const feedback = el('div', `feedback ${state.submitted ? (q.options[state.selected] === q.answer ? 'success' : 'error') : ''}`, state.submitted ? (q.options[state.selected] === q.answer ? 'Correct. Well done.' : `Incorrect. The correct answer is ${q.answer}.`) : ''); card.append(feedback);
-  card.append(button(state.submitted ? 'Try another question' : 'Confirm answer', 'primary-button', () => { if (!state.submitted && state.selected !== null) { if (q.options[state.selected] === q.answer) { state.score = 1; state.unlocked = true; } else { state.submitted = true; } render(); } else if (state.submitted) { startVerification(); } })); shell.append(card);
+  card.append(button(state.submitted ? 'Try another question' : 'Confirm answer', 'primary-button', () => { if (!state.submitted && state.selected !== null) { if (q.options[state.selected] === q.answer) { state.score = 1; state.unlocked = true; localStorage.setItem('blueprint-unlocked', 'true'); } else { state.submitted = true; } render(); } else if (state.submitted) { startVerification(); } })); shell.append(card);
 }
 function renderSchedule(shell) {
   const sessions = state.schedule.filter((item) => item.day === state.day).sort((a, b) => a.start.localeCompare(b.start)); const heading = el('div', 'schedule-heading'); const info = el('div'); info.append(el('span', 'eyebrow', 'Unlocked schedule'), el('h1', '', 'Your timetable'), el('p', '', `${state.day} · ${sessions.length} session${sessions.length === 1 ? '' : 's'}`)); heading.append(info, button('+ Add session', 'secondary-button', () => openSession())); shell.append(heading);
@@ -85,4 +85,5 @@ function openSession(session) {
   modal.append(form); document.body.append(modal); form.querySelectorAll('button[type="button"]').forEach((close) => close.addEventListener('click', () => modal.remove())); form.addEventListener('submit', (event) => { event.preventDefault(); const data = Object.fromEntries(new FormData(form)); data.id = value.id; const index = state.schedule.findIndex((item) => item.id === data.id); if (index === -1) state.schedule.push(data); else state.schedule[index] = data; state.day = data.day; save(); modal.remove(); render(); });
 }
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
-startVerification();
+state.questions = [makeQuestions()[0]];
+render();
