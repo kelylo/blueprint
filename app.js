@@ -39,7 +39,6 @@ const civil = [
   ['What is the purpose of a drainage system?', 'Control and convey water', ['Increase paint gloss', 'Reduce steel density', 'Measure room temperature']],
 ];
 const state = { schedule: JSON.parse(localStorage.getItem('blueprint-schedule') || 'null') || scheduleSeed, customDays: JSON.parse(localStorage.getItem('blueprint-days') || '[]'), questions: [], index: 0, selected: null, submitted: false, score: 0, unlocked: false, day: 'Saturday', view: 'cards' };
-let installPrompt = null;
 const allDays = () => [...DAYS, ...state.customDays];
 const shuffle = (items) => { const copy = items.slice(); for (let i = copy.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [copy[i], copy[j]] = [copy[j], copy[i]]; } return copy; };
 const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text) node.textContent = text; return node; };
@@ -64,7 +63,7 @@ function saveDays() { localStorage.setItem('blueprint-days', JSON.stringify(stat
 function startVerification() { state.questions = [makeQuestions()[0]]; state.index = 0; state.selected = null; state.submitted = false; state.score = 0; state.unlocked = false; render(); }
 function render() {
   document.body.innerHTML = '';
-  const shell = el('main', 'app-shell'); const header = el('header', 'topbar'); const brand = el('div', 'brand'); const logo = document.createElement('img'); logo.src = '/logo.png'; logo.alt = 'Blueprint'; const brandText = el('div'); brandText.append(el('strong', '', 'BLUEPRINT'), el('span', '', 'Civil engineering studio')); brand.append(logo, brandText); const headerActions = el('div'); if (state.unlocked) headerActions.append(button('Install app', 'secondary-button', installApp)); headerActions.append(button('↻', 'icon-button', startVerification)); header.append(brand, headerActions); shell.append(header);
+  const shell = el('main', 'app-shell'); const header = el('header', 'topbar'); const brand = el('div', 'brand'); const logo = document.createElement('img'); logo.src = '/logo.png'; logo.alt = 'Blueprint'; const brandText = el('div'); brandText.append(el('strong', '', 'BLUEPRINT'), el('span', '', 'Civil engineering studio')); brand.append(logo, brandText); header.append(brand, button('↻', 'icon-button', startVerification)); shell.append(header);
   if (state.unlocked) renderSchedule(shell); else renderGate(shell); document.body.append(shell);
 }
 function renderGate(shell) {
@@ -85,11 +84,5 @@ function openSession(session) {
   form.innerHTML = `<div class="modal-heading"><h2>${session ? 'Edit session' : 'Add session'}</h2><button type="button">×</button></div><label>Subject<input name="subject" required value="${value.subject}"></label><div class="two-col"><label>Teacher<input name="teacher" required value="${value.teacher}"></label><label>Room<input name="room" required value="${value.room}"></label><label>Type<select name="type"><option ${value.type === 'Lecture' ? 'selected' : ''}>Lecture</option><option ${value.type === 'TD' ? 'selected' : ''}>TD</option><option ${value.type === 'TP' ? 'selected' : ''}>TP</option><option ${value.type === 'Project' ? 'selected' : ''}>Project</option></select></label><label>Day<select name="day">${allDays().map((day) => `<option ${day === value.day ? 'selected' : ''}>${day}</option>`).join('')}</select></label><label>Start<input name="start" type="time" required value="${value.start}"></label><label>End<input name="end" type="time" required value="${value.end}"></label></div><div class="modal-actions"><button type="button" class="secondary-button">Cancel</button><button class="primary-button">Save session</button></div>`;
   modal.append(form); document.body.append(modal); form.querySelectorAll('button[type="button"]').forEach((close) => close.addEventListener('click', () => modal.remove())); form.addEventListener('submit', (event) => { event.preventDefault(); const data = Object.fromEntries(new FormData(form)); data.id = value.id; const index = state.schedule.findIndex((item) => item.id === data.id); if (index === -1) state.schedule.push(data); else state.schedule[index] = data; state.day = data.day; save(); modal.remove(); render(); });
 }
-function installApp() {
-  if (!installPrompt) { alert('Use your browser menu and choose “Install app” or “Add to Home Screen”.'); return; }
-  installPrompt.prompt();
-  installPrompt.userChoice.finally(() => { installPrompt = null; render(); });
-}
-window.addEventListener('beforeinstallprompt', (event) => { event.preventDefault(); installPrompt = event; if (state.unlocked) render(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 startVerification();
