@@ -18,6 +18,25 @@ const civil = [
   ['What does SPT stand for?', 'Standard Penetration Test', ['Soil Profile Test', 'Structural Performance Test', 'Seismic Prospecting Test']],
   ['What does a retaining wall hold back?', 'Soil', ['Roof loads', 'Sound', 'Furniture']],
   ['What is a beam mainly designed to carry?', 'Transverse loads', ['Only heat', 'Water flow', 'Light']],
+  ['What is the main purpose of a shear wall?', 'Resist lateral forces', ['Store water', 'Reduce lighting', 'Support furniture']],
+  ['Which foundation is commonly used for deep weak soils?', 'Pile foundation', ['Strip footing', 'Raft only', 'Paving slab']],
+  ['What does concrete curing primarily control?', 'Moisture and strength development', ['Paint color', 'Steel density', 'Window size']],
+  ['What is porosity?', 'The volume of voids in a material', ['The weight of a beam', 'The color of soil', 'The length of a pile']],
+  ['What does a slump test measure?', 'Concrete workability', ['Steel hardness', 'Soil color', 'Bridge length']],
+  ['Which load changes as people and furniture change?', 'Live load', ['Dead load', 'Self-weight', 'Curing load']],
+  ['What is a cantilever beam supported at?', 'One end', ['Both ends', 'No ends', 'Three ends']],
+  ['What does a retaining wall resist?', 'Lateral earth pressure', ['Roof heat', 'Traffic noise', 'Concrete color']],
+  ['Which material has a high strength-to-weight ratio?', 'Steel', ['Clay', 'Water', 'Glass']],
+  ['What is settlement in geotechnical engineering?', 'Downward movement of soil or a foundation', ['A paint finish', 'A type of beam', 'Water evaporation']],
+  ['What is the purpose of a lintel?', 'Support above an opening', ['Drain a foundation', 'Measure soil moisture', 'Mix concrete']],
+  ['What is a culvert used for?', 'Allow water to pass beneath an obstruction', ['Store cement', 'Test steel', 'Support a crane']],
+  ['What does BIM help coordinate?', 'Building information and construction data', ['Only weather reports', 'Personal finances', 'Traffic lights only']],
+  ['Which test is used to investigate soil resistance?', 'Standard Penetration Test', ['Slump test', 'Drop test', 'Paint test']],
+  ['What does a column primarily carry?', 'Axial loads', ['Water flow', 'Sunlight', 'Sound']],
+  ['What is prestressed concrete designed to improve?', 'Performance over longer spans', ['Paint adhesion', 'Room lighting', 'Water color']],
+  ['What is erosion?', 'The removal of soil by wind or water', ['Concrete curing', 'Steel welding', 'Floor loading']],
+  ['Which drawing communicates dimensions and construction details?', 'Technical drawing', ['Weather chart', 'Invoice only', 'Attendance sheet']],
+  ['What is the purpose of a drainage system?', 'Control and convey water', ['Increase paint gloss', 'Reduce steel density', 'Measure room temperature']],
 ];
 const state = { schedule: JSON.parse(localStorage.getItem('blueprint-schedule') || 'null') || scheduleSeed, questions: [], index: 0, selected: null, submitted: false, score: 0, unlocked: false, day: 'Saturday', view: 'cards' };
 const shuffle = (items) => { const copy = items.slice(); for (let i = copy.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [copy[i], copy[j]] = [copy[j], copy[i]]; } return copy; };
@@ -36,21 +55,21 @@ function makeQuestions() {
   });
   DAYS.forEach((day) => { const count = state.schedule.filter((item) => item.day === day).length; if (count) result.push({ text: `How many sessions are scheduled on ${day}?`, answer: String(count), options: shuffle([String(count), String(count + 1), String(Math.max(1, count - 1)), String(count + 2)]) }); });
   civil.forEach(([text, answer, wrong]) => result.push({ text, answer, options: shuffle([answer, ...wrong]) }));
-  const expanded = []; while (expanded.length < 100) expanded.push(...shuffle(result)); return shuffle(expanded).slice(0, 100);
+  return shuffle(result);
 }
 function save() { localStorage.setItem('blueprint-schedule', JSON.stringify(state.schedule)); }
-function startVerification() { state.questions = makeQuestions(); state.index = 0; state.selected = null; state.submitted = false; state.score = 0; state.unlocked = false; render(); }
+function startVerification() { state.questions = [makeQuestions()[0]]; state.index = 0; state.selected = null; state.submitted = false; state.score = 0; state.unlocked = false; render(); }
 function render() {
   document.body.innerHTML = '';
   const shell = el('main', 'app-shell'); const header = el('header', 'topbar'); const brand = el('div', 'brand'); const logo = document.createElement('img'); logo.src = '/logo.png'; logo.alt = 'Blueprint'; const brandText = el('div'); brandText.append(el('strong', '', 'BLUEPRINT'), el('span', '', 'Civil engineering studio')); brand.append(logo, brandText); header.append(brand, button('↻', 'icon-button', startVerification)); shell.append(header);
   if (state.unlocked) renderSchedule(shell); else renderGate(shell); document.body.append(shell);
 }
 function renderGate(shell) {
-  const hero = el('div', 'hero'); hero.append(el('span', 'eyebrow', 'Knowledge check · 100 questions')); const title = el('h1'); title.innerHTML = 'Know your week<br><em>before you go.</em>'; hero.append(title, el('p', '', 'Answer a fresh sequence about your timetable and civil engineering before your schedule becomes available.')); shell.append(hero);
-  const card = el('div', 'quiz-card'); const q = state.questions[state.index]; const row = el('div', 'progress-row'); row.append(el('span', '', `Question ${state.index + 1} of 100`), el('span', '', `${state.score} correct`)); card.append(row); const track = el('div', 'progress-track'); const fill = el('i'); fill.style.width = `${state.index}%`; track.append(fill); card.append(track, el('span', 'question-label', `Question ${String(state.index + 1).padStart(2, '0')}`), el('h2', '', q.text));
+  const hero = el('div', 'hero'); hero.append(el('span', 'eyebrow', 'Quick knowledge check')); const title = el('h1'); title.innerHTML = 'Know your week<br><em>before you go.</em>'; hero.append(title, el('p', '', 'Answer one fresh question about your timetable or civil engineering to unlock your schedule.')); shell.append(hero);
+  const card = el('div', 'quiz-card'); const q = state.questions[state.index]; const row = el('div', 'progress-row'); row.append(el('span', '', 'One question to unlock'), el('span', '', 'Fresh every time')); card.append(row); const track = el('div', 'progress-track'); const fill = el('i'); fill.style.width = '100%'; track.append(fill); card.append(track); card.append(el('span', 'question-label', 'Question 01'), el('h2', '', q.text));
   const answers = el('div', 'answers'); q.options.forEach((option, index) => { const answer = button('', 'answer', () => { if (!state.submitted) { state.selected = index; render(); } }); answer.append(el('span', 'answer-dot'), el('span', '', option)); if (state.selected === index) answer.classList.add('selected'); if (state.submitted && option === q.answer) answer.classList.add('correct'); if (state.submitted && state.selected === index && option !== q.answer) answer.classList.add('incorrect'); answer.disabled = state.submitted; answers.append(answer); }); card.append(answers);
   const feedback = el('div', `feedback ${state.submitted ? (q.options[state.selected] === q.answer ? 'success' : 'error') : ''}`, state.submitted ? (q.options[state.selected] === q.answer ? 'Correct. Well done.' : `Incorrect. The correct answer is ${q.answer}.`) : ''); card.append(feedback);
-  card.append(button(state.submitted ? (state.index === 99 ? 'Finish verification' : 'Next question') : 'Confirm answer', 'primary-button', () => { if (!state.submitted && state.selected !== null) { state.submitted = true; if (q.options[state.selected] === q.answer) state.score += 1; render(); } else if (state.submitted) { if (state.index === 99) state.unlocked = true; else { state.index += 1; state.selected = null; state.submitted = false; } render(); } })); shell.append(card);
+  card.append(button(state.submitted ? 'Try another question' : 'Confirm answer', 'primary-button', () => { if (!state.submitted && state.selected !== null) { if (q.options[state.selected] === q.answer) { state.score = 1; state.unlocked = true; } else { state.submitted = true; } render(); } else if (state.submitted) { startVerification(); } })); shell.append(card);
 }
 function renderSchedule(shell) {
   const sessions = state.schedule.filter((item) => item.day === state.day).sort((a, b) => a.start.localeCompare(b.start)); const heading = el('div', 'schedule-heading'); const info = el('div'); info.append(el('span', 'eyebrow', 'Unlocked schedule'), el('h1', '', 'Your timetable'), el('p', '', `${state.day} · ${sessions.length} session${sessions.length === 1 ? '' : 's'}`)); heading.append(info, button('+ Add session', 'secondary-button', () => openSession())); shell.append(heading);
